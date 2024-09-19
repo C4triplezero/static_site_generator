@@ -141,7 +141,129 @@ class TestSplitNodesDelimiter(unittest.TestCase):
         text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
         self.assertEqual(extract_markdown_links(text), [("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")])
 
+    def test_split_nodes_images(self):
+        node = TextNode(
+            "This is text with a link ![to boot dev](https://www.boot.dev) and ![to youtube](https://www.youtube.com/@bootdotdev)",
+            text_type_text,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertEqual(new_nodes,
+                            [
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode("to boot dev", text_type_image, "https://www.boot.dev"),
+                                TextNode(" and ", text_type_text),
+                                TextNode(
+                                    "to youtube", text_type_image, "https://www.youtube.com/@bootdotdev"
+                                ),
+                            ]
+                         
+                        )
+        
+    def test_split_nodes_images_end_text(self):
+        node = TextNode(
+            "This is text with a link ![to boot dev](https://www.boot.dev) and ![to youtube](https://www.youtube.com/@bootdotdev) awesome!",
+            text_type_text,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertEqual(new_nodes,
+                            [
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode("to boot dev", text_type_image, "https://www.boot.dev"),
+                                TextNode(" and ", text_type_text),
+                                TextNode(
+                                    "to youtube", text_type_image, "https://www.youtube.com/@bootdotdev"
+                                ),
+                                TextNode(" awesome!", text_type_text)
+                            ]
+                         
+                        )
 
+    def test_split_multiple_nodes_images(self):
+        node2 = TextNode(
+            "This is text with a link ![to boot dev](https://www.boot.dev) and ![to youtube](https://www.youtube.com/@bootdotdev)",
+            text_type_text,
+        )
+        node = TextNode(
+            "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)",
+            text_type_text,
+        )
+        new_nodes = split_nodes_image([node, node2])
+        self.assertEqual(new_nodes,
+                            [
+                                TextNode("This is text with a ", text_type_text),
+                                TextNode("rick roll", text_type_image, "https://i.imgur.com/aKaOqIh.gif"),
+                                TextNode(" and ", text_type_text),
+                                TextNode(
+                                    "obi wan", text_type_image, "https://i.imgur.com/fJRm4Vk.jpeg"
+                                ),                                
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode("to boot dev", text_type_image, "https://www.boot.dev"),
+                                TextNode(" and ", text_type_text),
+                                TextNode(
+                                    "to youtube", text_type_image, "https://www.youtube.com/@bootdotdev"
+                                ),
+                            ]
+                         
+                        )
+
+    def test_split_nodes_links(self):
+        node = TextNode(
+            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)",
+            text_type_text,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertEqual(new_nodes,
+                            [
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode("to boot dev", text_type_link, "https://www.boot.dev"),
+                                TextNode(" and ", text_type_text),
+                                TextNode(
+                                    "to youtube", text_type_link, "https://www.youtube.com/@bootdotdev"
+                                ),
+                            ]
+                         
+                        )
+
+    def test_split_nodes_links_end_text(self):
+        node = TextNode(
+            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev) awesome!",
+            text_type_text,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertEqual(new_nodes,
+                            [
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode("to boot dev", text_type_link, "https://www.boot.dev"),
+                                TextNode(" and ", text_type_text),
+                                TextNode(
+                                    "to youtube", text_type_link, "https://www.youtube.com/@bootdotdev"
+                                ),
+                                TextNode(" awesome!", text_type_text)
+                            ]
+                         
+                        )
+
+    def test_split_multiple_nodes_single_link(self):
+        node = TextNode(
+            "This is text with a link [to boot dev](https://www.boot.dev)",
+            text_type_text,
+        )
+        node2 = TextNode(
+            "This is text with a link [to youtube](https://www.youtube.com/@bootdotdev)",
+            text_type_text,
+        )
+        new_nodes = split_nodes_link([node, node2])
+        self.assertEqual(new_nodes,
+                            [
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode("to boot dev", text_type_link, "https://www.boot.dev"),
+                                TextNode("This is text with a link ", text_type_text),
+                                TextNode(
+                                    "to youtube", text_type_link, "https://www.youtube.com/@bootdotdev"
+                                ),
+                            ]
+                         
+                        )
 
 if __name__ == "__main__":
     unittest.main()

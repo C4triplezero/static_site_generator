@@ -73,3 +73,67 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     matches = re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
     return matches
+
+def split_nodes_image(old_nodes):
+    return_list = []
+    for node in old_nodes:
+        extracted = extract_markdown_images(node.text)
+        if len(extracted) == 0:
+            return_list.append(node)
+            continue
+        count = 0
+        new_list = []
+        for tuple in extracted:
+            if count >= 1:
+                image_alt = tuple[0]
+                image_link = tuple[1]
+                sections = new_list[-1].text.split(f"![{image_alt}]({image_link})", 1)
+                new_list.pop()
+                new_list.append(TextNode(sections[0], text_type_text))
+                new_list.append(TextNode(image_alt, text_type_image, image_link))
+                if sections[1] != "":
+                    new_list.append(TextNode(sections[1], text_type_text))
+                continue               
+            image_alt = tuple[0]
+            image_link = tuple[1]
+            sections = node.text.split(f"![{image_alt}]({image_link})", 1)
+            new_list.append(TextNode(sections[0], text_type_text))
+            new_list.append(TextNode(image_alt, text_type_image, image_link))
+            if sections[1] != "":
+                new_list.append(TextNode(sections[1], text_type_text))
+            count += 1
+        return_list.extend(new_list)
+    return return_list
+    
+
+
+def split_nodes_link(old_nodes):
+    return_list = []
+    for node in old_nodes:
+        extracted = extract_markdown_links(node.text)
+        if len(extracted) == 0:
+            return_list.append(node)
+            continue
+        count = 0
+        new_list = []
+        for tuple in extracted:
+            if count >= 1:
+                alt_text = tuple[0]
+                url = tuple[1]
+                sections = new_list[-1].text.split(f"[{alt_text}]({url})", 1)
+                new_list.pop()
+                new_list.append(TextNode(sections[0], text_type_text))
+                new_list.append(TextNode(alt_text, text_type_link, url))
+                if sections[1] != "":
+                    new_list.append(TextNode(sections[1], text_type_text))
+                continue               
+            alt_text = tuple[0]
+            url = tuple[1]
+            sections = node.text.split(f"[{alt_text}]({url})", 1)
+            new_list.append(TextNode(sections[0], text_type_text))
+            new_list.append(TextNode(alt_text, text_type_link, url))
+            if sections[1] != "":
+                new_list.append(TextNode(sections[1], text_type_text))
+            count += 1
+        return_list.extend(new_list)
+    return return_list
