@@ -88,6 +88,8 @@ def split_nodes_image(old_nodes):
                 image_alt = tuple[0]
                 image_link = tuple[1]
                 sections = new_list[-1].text.split(f"![{image_alt}]({image_link})", 1)
+                if len(sections) != 2:
+                    raise ValueError("Invalid markdown, image section not closed")
                 new_list.pop()
                 new_list.append(TextNode(sections[0], text_type_text))
                 new_list.append(TextNode(image_alt, text_type_image, image_link))
@@ -97,6 +99,8 @@ def split_nodes_image(old_nodes):
             image_alt = tuple[0]
             image_link = tuple[1]
             sections = node.text.split(f"![{image_alt}]({image_link})", 1)
+            if len(sections) != 2:
+                raise ValueError("Invalid markdown, image section not closed")
             new_list.append(TextNode(sections[0], text_type_text))
             new_list.append(TextNode(image_alt, text_type_image, image_link))
             if sections[1] != "":
@@ -104,8 +108,6 @@ def split_nodes_image(old_nodes):
             count += 1
         return_list.extend(new_list)
     return return_list
-    
-
 
 def split_nodes_link(old_nodes):
     return_list = []
@@ -121,6 +123,8 @@ def split_nodes_link(old_nodes):
                 alt_text = tuple[0]
                 url = tuple[1]
                 sections = new_list[-1].text.split(f"[{alt_text}]({url})", 1)
+                if len(sections) != 2:
+                    raise ValueError("Invalid markdown, link section not closed")
                 new_list.pop()
                 new_list.append(TextNode(sections[0], text_type_text))
                 new_list.append(TextNode(alt_text, text_type_link, url))
@@ -130,6 +134,8 @@ def split_nodes_link(old_nodes):
             alt_text = tuple[0]
             url = tuple[1]
             sections = node.text.split(f"[{alt_text}]({url})", 1)
+            if len(sections) != 2:
+                raise ValueError("Invalid markdown, link section not closed")
             new_list.append(TextNode(sections[0], text_type_text))
             new_list.append(TextNode(alt_text, text_type_link, url))
             if sections[1] != "":
@@ -137,3 +143,11 @@ def split_nodes_link(old_nodes):
             count += 1
         return_list.extend(new_list)
     return return_list
+
+def text_to_textnodes(text):
+    node = TextNode(text, text_type_text)
+    bold = split_nodes_delimiter([node], "**", text_type_bold)
+    italic = split_nodes_delimiter(bold, "*", text_type_italic)
+    code = split_nodes_delimiter(italic, "`", text_type_code)
+    image = split_nodes_image(code)
+    return split_nodes_link(image)
